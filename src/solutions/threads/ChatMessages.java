@@ -1,7 +1,7 @@
 package solutions.threads;
 
 public class ChatMessages {
-
+    //просто единое место хранения всех реплик
     public static final String JOEY_1 = "Hey, hey";
     public static final String CHANDLER_1 = "Hey.";
     public static final String PHOEBE_1 = "Hey";

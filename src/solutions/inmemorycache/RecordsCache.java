@@ -3,12 +3,8 @@ package solutions.inmemorycache;
 import java.util.*;
 
 public class RecordsCache {
-    //TODO описать выбор Map
     private int currentMaxRecordsIndex;//Хранит позицию последней добавленной в конец листа записи
-    /*
-    Для хранения записей выбран ArrayList. Сложность get() по индексу в ArrayList(как массива) - O(1).
-    Синглтон. На всю программу можно создать только один лист с записями.
-     */
+    //Для хранения записей выбран ArrayList. Сложность get() по индексу в ArrayList(как массива) - O(1).
     private List<Record> records;//Лист записей
 
     private Map<Long, Integer> longListMap;//Мапа с индексами для поиска по полю account.(!) Предполагаю, что поле account уникально для каждой записи (!).
@@ -18,19 +14,22 @@ public class RecordsCache {
     private RecordsCache() {
 
         currentMaxRecordsIndex = 0;
-        records = new ArrayList<>();
-        longListMap = new HashMap<>();
+        records = new ArrayList<>();//расширяемый массив так как число записей может быть любым и может меняться динамически
+        longListMap = new HashMap<>();//хешированные мапы для константной скорости поиска по ключу
         stringListMap = new HashMap<>();
         doubleListMap = new HashMap<>();
 
     }
 
-    private RecordsCache instance;
+    //По итогу имеем центральный массив записей, записи из которого можно доставать по любому из полей благодаря индексации по всем этим полям.
+    //Например, в doubleListMap ключом является поле value, а хранящийся под этим ключом лист содержит в себе индексы из листа records, по которым можно достать записи с этим value.
 
+    private static RecordsCache instance;
+    //Синглтон. На всю программу можно создать только один лист с записями.
     /**
      * Возвращает объект класса RecordsCache.
      **/
-    public RecordsCache getInstance() {//гарантия создания одного кеша на всю программу
+    public static RecordsCache getInstance() {
         if (instance == null) {
             instance = new RecordsCache();
         }
@@ -45,7 +44,7 @@ public class RecordsCache {
      **/
     public boolean addRecord(Record record) {
 
-        if(longListMap.get(record.getAccount())!=null){//возвращаем false, если такой элемент уже был добавлен ранее(не может быть несколько записей с одинаковым account)
+        if (longListMap.get(record.getAccount()) != null) {//возвращаем false, если такой элемент уже был добавлен ранее(не может быть несколько записей с одинаковым account)
             return false;
         }
 
@@ -61,17 +60,17 @@ public class RecordsCache {
 
         longListMap.put(record.getAccount(), index);
 
-        if(stringListMap.containsKey(record.getName())){
+        if (stringListMap.containsKey(record.getName())) {
             stringListMap.get(record.getName()).add(index);
-        }else {
+        } else {
             ArrayList<Integer> newIndexList = new ArrayList<>();
             newIndexList.add(index);
             stringListMap.put(record.getName(), newIndexList);
         }
 
-        if(doubleListMap.containsKey(record.getValue())){
+        if (doubleListMap.containsKey(record.getValue())) {
             doubleListMap.get(record.getValue()).add(index);
-        }else {
+        } else {
             ArrayList<Integer> newIndexList = new ArrayList<>();
             newIndexList.add(index);
             doubleListMap.put(record.getValue(), newIndexList);
@@ -92,8 +91,7 @@ public class RecordsCache {
     public Record getRecord(long account) {
         try {
             return records.get(longListMap.get(account));//O(1)+O(1) = O(1)
-        }catch (Exception e){
-            System.out.println("Account "+account+" не найден. Возвращён null");
+        } catch (Exception e) {
             return null;
         }
         //общая сложность алгоритма получения записи по account: O(1)
@@ -106,8 +104,7 @@ public class RecordsCache {
     public Record getRecord(String name) {
         try {
             return records.get(stringListMap.get(name).get(0));//O(1)+O(1)+O(1) = O(1)
-        }catch (Exception e){
-            System.out.println("Name "+name+" не найдено. Возвращён null");
+        } catch (Exception e) {
             return null;
         }
         //общая сложность алгоритма получения записи по name: O(1)
@@ -118,29 +115,31 @@ public class RecordsCache {
      * Сложность получения записи по value - O(1)
      **/
     public Record getRecord(double value) {
-        try{
+        try {
             return records.get(doubleListMap.get(value).get(0));//O(1)+O(1)+O(1) = O(1)
-        }catch (Exception e){
-            System.out.println("Value "+value+" не найдено. Возвращён null");
+        } catch (Exception e) {
             return null;
         }
         //общая сложность алгоритма получения записи по value: O(1)
     }
 
     /**
-     * Возвращает List всех записей, в которых поле name совпадает с переданной строкой, либо null.
+     * Возвращает List всех записей, в которых поле name совпадает с переданной строкой, либо пустой лист.
      * Сложность получения листа с записями по name - O(N), где N - число записей с таким name
      **/
     public List<Record> getRecords(String name) {
 
+        if(name==null){
+            return new ArrayList<>();
+        }
+
         List<Record> recordsList = new ArrayList<>();
         List<Integer> indexes;
 
-        try{
-            indexes = stringListMap.get(name); //O(1)
-        }catch (Exception e){
-            System.out.println("Name "+name+" не найдено. Возвращён null");
-            return null;
+        indexes = stringListMap.get(name);//O(1)
+
+        if (indexes == null) {
+            return recordsList;
         }
 
         for (int i : indexes) {//O(N), где N - число записей с таким name
@@ -153,7 +152,7 @@ public class RecordsCache {
     }
 
     /**
-     * Возвращает List всех записей, в которых поле value совпадает с переданным значением, либо null.
+     * Возвращает List всех записей, в которых поле value совпадает с переданным значением, либо пустой лист.
      * Сложность получения листа с записями по value - O(N), где N - число записей с таким value
      **/
     public List<Record> getRecords(double value) {
@@ -161,11 +160,11 @@ public class RecordsCache {
         List<Record> recordsList = new ArrayList<>();
         List<Integer> indexes;
 
-        try {
-            indexes = doubleListMap.get(value);//O(1)
-        }catch (Exception e){
-            System.out.println("Value "+value+" не найдено. Возвращён null");
-            return null;
+
+        indexes = doubleListMap.get(value);//O(1)
+
+        if (indexes == null) {
+            return recordsList;
         }
 
         for (int i : indexes) {//O(N), где N - число записей с таким value
@@ -186,6 +185,10 @@ public class RecordsCache {
      **/
     public boolean updateRecord(Record oldRecord, Record newRecord) {
 
+        if (oldRecord == null || newRecord == null) {
+            return false;
+        }
+
         if (longListMap.get(oldRecord.getAccount()) == null ||
                 oldRecord.equals(newRecord)) {//если переданная старая запись не находится в кеше или она идентична новой, то возвращаем false, потому что менять нечего
             return false;
@@ -201,7 +204,7 @@ public class RecordsCache {
         }
 
         if (!oldRecord.getName().equals(newRecord.getName())) {//если в новой записи изменяется name
-            stringListMap.get(oldRecord.getName()).remove(index);//удаляем index из List<Integer>, принадлежащего name старой записи
+            stringListMap.get(oldRecord.getName()).remove((Object) index);//удаляем index из List<Integer>, принадлежащего name старой записи
 
             if (stringListMap.containsKey(newRecord.getName())) {
                 stringListMap.get(newRecord.getName()).add(index);//если есть пара <name,List<Integer>> с name новой записи, тогда добавляем List<Integer> этого name index
@@ -237,17 +240,22 @@ public class RecordsCache {
      **/
     public boolean deleteRecord(Record record) {
 
+        if(record==null){
+            return false;
+        }
+
         if (!longListMap.containsKey(record.getAccount())) {//возвращаем false, если за такой записью не закреплено индекса по аккаунту(такой записи нет в кеше)
             return false;
         }
+
 
         int index = longListMap.get(record.getAccount());
         //удаляем переданную запись из кеша вместе с указывающими на неё индексами
         records.remove(index);
         records.add(index, null);//заменяем удалённый элемент null-ом, чтобы не сбивать позиции следующих за ним элементов.
         longListMap.remove(record.getAccount());//удаляем пару <account,List<Integer>>
-        stringListMap.get(record.getName()).remove(index);//удаляем index из List<Integer> пары <name,List<Integer>>
-        doubleListMap.get(record.getValue()).remove(index);//удаляем index из List<Integer> пары <value,List<Integer>>
+        stringListMap.get(record.getName()).remove((Object) index);//удаляем index из List<Integer> пары <name,List<Integer>>
+        doubleListMap.get(record.getValue()).remove((Object) index);//удаляем index из List<Integer> пары <value,List<Integer>>
 
         //удаляем из мап пары, в которых теперь содержатся пустые листы с индексами
         if (stringListMap.get(record.getName()).isEmpty()) {

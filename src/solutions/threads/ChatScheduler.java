@@ -3,7 +3,7 @@ package solutions.threads;
 import java.util.Stack;
 
 public class ChatScheduler {
-
+    //стек, который хранит очередность печати реплик потоками.
     private static Stack<CurrentWriters> messagesOrder;
 
     public ChatScheduler(){
@@ -27,8 +27,8 @@ public class ChatScheduler {
         messagesOrder.push(CurrentWriters.Joey);
     }
 
-    public CurrentWriters popCurrentWriter(){
-       return messagesOrder.pop();
+    public void popCurrentWriter(){
+        messagesOrder.pop();
     }
 
     public CurrentWriters peekCurrentWriter(){

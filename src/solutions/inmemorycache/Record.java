@@ -24,4 +24,12 @@ public class Record {
         return value;
     }
 
+    @Override
+    public String toString() {
+        return "Record{" +
+                "account=" + account +
+                ", name='" + name + '\'' +
+                ", value=" + value +
+                '}';
+    }
 }
